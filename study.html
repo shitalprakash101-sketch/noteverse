@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NoteVerse | Every Chapter, Made Simple.</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'class', theme: { extend: { colors: { brand: { 50:'#f5f3ff', 100:'#ede9fe', 600:'#6d28d9', 700:'#5b21b6' }, indigo: { 600:'#4f46e5' } } } } };
+</script>
+</head>
+<body class="bg-sky-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen">
+
+<header class="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    <a href="#/" class="flex items-center gap-2 text-lg font-bold">
+      <span class="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-600 to-indigo-600 text-white">📖</span>
+      Note<span class="text-brand-600 dark:text-brand-100">Verse</span>
+    </a>
+    <div class="flex items-center gap-2">
+      <button id="langBtn" class="rounded-xl px-3 py-2 text-sm ring-1 ring-brand-100 hover:bg-brand-50 dark:ring-slate-700 dark:hover:bg-slate-800">हिं</button>
+      <button id="themeBtn" class="rounded-xl px-3 py-2 text-sm ring-1 ring-brand-100 hover:bg-brand-50 dark:ring-slate-700 dark:hover:bg-slate-800">🌙</button>
+      <a href="#/demo" data-t="demo" class="hidden rounded-xl px-4 py-2 font-medium text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50 sm:inline-flex dark:text-brand-100 dark:ring-slate-700 dark:hover:bg-slate-800"></a>
+      <a href="#/notebook" data-t="notebook" class="hidden rounded-xl px-4 py-2 font-medium text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50 sm:inline-flex dark:text-brand-100 dark:ring-slate-700 dark:hover:bg-slate-800"></a>
+      <a href="#/login" data-t="login" class="hidden rounded-xl px-4 py-2 font-medium text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50 sm:inline-flex dark:text-brand-100 dark:ring-slate-700 dark:hover:bg-slate-800"></a>
+      <a href="#/signup" data-t="signup" class="rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 px-4 py-2 font-semibold text-white"></a>
+    </div>
+  </div>
+</header>
+
+<main id="view" class="mx-auto max-w-6xl px-4 py-8"></main>
+
+<footer class="mt-12 border-t border-slate-200 py-8 dark:border-slate-800">
+  <div class="mx-auto flex max-w-6xl flex-wrap justify-center gap-5 px-4 text-sm text-slate-600 dark:text-slate-400">
+    <a href="#">About Us</a><a href="#">Contact</a><a href="#">Privacy Policy</a><a href="#">Terms</a>
+  </div>
+</footer>
+
+<script>
+/* ============ CONFIG ============
+   AI_BASE: aapka backend URL (jaise https://your-app.vercel.app/api).
+   API key backend par rahegi, frontend par nahi.
+   Endpoints: POST /generate-mcq, POST /generate-notes, POST /check-answer
+   Khali ho to AI features koi nakli result nahi dikhayenge. */
+const AI_BASE = "";
+
+const T = {
+  tagline: ["Every Chapter, Made Simple.", "हर अध्याय, आसान बनाया गया।"],
+  heroTitle: ["Study Smarter with NoteVerse AI", "NoteVerse AI के साथ स्मार्ट पढ़ाई करें"],
+  heroSub: ["AI-powered notes, practice tests and exam preparation for Class 6 to 12.", "कक्षा 6 से 12 के लिए AI नोट्स, अभ्यास परीक्षा और परीक्षा की तैयारी।"],
+  start: ["Start Learning Free", "मुफ़्त में शुरू करें"],
+  tryDemo: ["Try Demo First", "पहले डेमो देखें"],
+  demo: ["Demo", "डेमो"], notebook: ["My Notebook", "मेरी नोटबुक"],
+  login: ["Login", "लॉगिन"], signup: ["Sign Up", "साइन अप"],
+  featuresTitle: ["Everything you need to prepare", "तैयारी के लिए सब कुछ"],
+  howTitle: ["How It Works", "यह कैसे काम करता है"],
+  faqTitle: ["Frequently Asked Questions", "अक्सर पूछे जाने वाले प्रश्न"],
+  back: ["← Back", "← वापस"], welcome: ["Welcome 👋", "स्वागत है 👋"],
+  demoBanner: ["Demo mode mein ho. Signup karke progress account mein save hoga.", "डेमो मोड में हैं। साइनअप करके प्रगति खाते में सहेजी जाएगी।"],
+  signupFree: ["Free Signup", "मुफ़्त साइनअप"],
+  sampleNote: ["Data abhi browser mein save hota hai. Account sync Stage 2 mein aayega.", "डेटा अभी ब्राउज़र में सहेजा जाता है। खाता सिंक Stage 2 में आएगा।"],
+  recentChapters: ["Recent chapters (sample)", "हाल के अध्याय (नमूना)"],
+  todayPlan: ["Today's plan (sample)", "आज की योजना (नमूना)"],
+  authNote: ["Auth Stage 2 mein connect hoga.", "ऑथ Stage 2 में जुड़ेगा।"],
+  photoTitle: ["Upload Chapter, Get Notes", "अध्याय अपलोड करें, नोट्स पाएँ"],
+  photoSub: ["Chapter ki photo ya PDF upload karein aur notebook mein save karein.", "अध्याय की फ़ोटो या PDF अपलोड करें और नोटबुक में सहेजें।"],
+  notesTitle: ["AI Notes Generator", "AI नोट्स जनरेटर"],
+  notesSub: ["Chapter ki photo upload karein, mode chunein aur notes banayein.", "अध्याय की फ़ोटो अपलोड करें, मोड चुनें और नोट्स बनाएँ।"],
+  objTitle: ["Objective Practice", "वस्तुनिष्ठ अभ्यास"],
+  objSub: ["Chapter ki photo save karein, 20 ya usse zyada MCQ solve karein aur ek saath submit karein.", "अध्याय की फ़ोटो सहेजें, 20 या अधिक MCQ हल करें और एक साथ जमा करें।"],
+  subjTitle: ["Subjective Answer Checker", "विवरणात्मक उत्तर जाँचक"],
+  subjSub: ["Chapter photo aur apna answer (text ya photo) upload karein, phir check karwayein.", "अध्याय की फ़ोटो और अपना उत्तर (टेक्स्ट या फ़ोटो) अपलोड करें, फिर जाँच करवाएँ।"],
+  nbTitle: ["My Notebook", "मेरी नोटबुक"],
+  nbEmpty: ["Abhi kuch save nahi hua hai.", "अभी कुछ सहेजा नहीं गया है।"],
+  classLabel: ["Class", "कक्षा"], subjectLabel: ["Subject", "विषय"],
+  chapterLabel: ["Chapter name", "अध्याय का नाम"],
+  chapterPh: ["e.g. Light - Reflection", "जैसे प्रकाश - परावर्तन"],
+  dropText: ["Files yahan drag karein ya chunein", "फ़ाइलें यहाँ ड्रैग करें या चुनें"],
+  fileRules: ["JPG, PNG, WEBP ya PDF · max 10 MB per file · max 10 files", "JPG, PNG, WEBP या PDF · हर फ़ाइल 10 MB तक · अधिकतम 10"],
+  chooseFiles: ["Files chunein", "फ़ाइलें चुनें"],
+  removeBtn: ["Hataayein", "हटाएँ"], clearAll: ["Sab hataayein", "सब हटाएँ"],
+  errType: ["file type support nahi hai", "फ़ाइल प्रकार समर्थित नहीं"],
+  errSize: ["file 10 MB se badi hai", "फ़ाइल 10 MB से बड़ी है"],
+  errCount: ["max 10 files", "अधिकतम 10 फ़ाइलें"],
+  saveNb: ["Notebook mein save karein", "नोटबुक में सहेजें"],
+  saveDone: ["Notebook mein save ho gaya.", "नोटबुक में सहेज दिया गया।"],
+  saveFail: ["Save nahi hua (browser storage bhar sakta hai). File chhoti karke dobara try karein.", "सहेजा नहीं जा सका (ब्राउज़र स्टोरेज भर सकता है)। फ़ाइल छोटी करके दोबारा कोशिश करें।"],
+  delBtn: ["Delete", "मिटाएँ"],
+  needFiles: ["Pehle chapter ki photo ya PDF upload karein.", "पहले अध्याय की फ़ोटो या PDF अपलोड करें।"],
+  needAnswer: ["Answer type karein ya uski photo upload karein.", "उत्तर टाइप करें या उसकी फ़ोटो अपलोड करें।"],
+  noKey: ["Ye feature AI backend set hone ke baad chalega (AI_BASE). Abhi koi nakli result nahi dikhaya ja raha.", "यह सुविधा AI बैकएंड सेट होने के बाद चलेगी (AI_BASE)। अभी कोई नकली परिणाम नहीं दिखाया जा रहा।"],
+  aiErr: ["AI request fail hui. Dobara try karein.", "AI अनुरोध विफल हुआ। दोबारा कोशिश करें।"],
+  busy: ["AI kaam kar raha hai...", "AI काम कर रहा है..."],
+  loaded: ["Questions load ho gaye.", "प्रश्न लोड हो गए।"],
+  sampleLoad: ["Sample 22 questions (demo)", "नमूना 22 प्रश्न (डेमो)"],
+  aiGen: ["AI se 20 MCQ banayein", "AI से 20 MCQ बनाएँ"],
+  jsonLabel: ["Apne questions JSON mein paste karein", "अपने प्रश्न JSON में डालें"],
+  jsonLoad: ["Load karein", "लोड करें"],
+  jsonErr: ["JSON galat hai. Har question mein q, 4 options aur answer (0-3) hona chahiye.", "JSON गलत है। हर प्रश्न में q, 4 विकल्प और answer (0-3) होना चाहिए।"],
+  qCount: ["questions loaded", "प्रश्न लोड हुए"],
+  minQ: ["Submit ke liye kam se kam 20 questions chahiye.", "जमा करने के लिए कम से कम 20 प्रश्न चाहिए।"],
+  submitQuiz: ["Sab submit karein", "सभी जमा करें"],
+  newTest: ["Naya test", "नया टेस्ट"],
+  correct: ["Sahi", "सही"],
+  explain: ["Vyakhya", "व्याख्या"],
+  saveResult: ["Result save karein", "परिणाम सहेजें"],
+  modeShort: ["Short notes", "छोटे नोट्स"], modeLong: ["Long notes", "लंबे नोट्स"], modeRev: ["Revision sheet", "रिवीजन शीट"],
+  genNotes: ["Notes banayein", "नोट्स बनाएँ"],
+  answerLabel: ["Apna answer likhein", "अपना उत्तर लिखें"],
+  questionLabel: ["Question (type karein)", "प्रश्न (टाइप करें)"],
+  answerPhoto: ["Handwritten answer ki photo (optional)", "हस्तलिखित उत्तर की फ़ोटो (वैकल्पिक)"],
+  checkBtn: ["Check karwayein", "जाँच करवाएँ"],
+  estNote: ["Ye AI ka anuman hai, teacher ya board ke official marks nahi.", "यह AI का अनुमान है, शिक्षक या बोर्ड के आधिकारिक अंक नहीं।"],
+  marks: ["Estimated marks", "अनुमानित अंक"],
+  feedback: ["Feedback", "फ़ीडबैक"],
+  model: ["Model answer", "आदर्श उत्तर"],
+  soonText: ["Ye feature agle stage mein aayega.", "यह सुविधा अगले चरण में आएगी।"],
+  processMsg: ["Notes aur AI check ke liye backend chahiye (Stage 4). Chapter ki photo abhi save ho sakti hai.", "नोट्स और AI जाँच के लिए बैकएंड चाहिए (Stage 4)। अध्याय की फ़ोटो अभी सहेजी जा सकती है।"],
+  close: ["Close", "बंद करें"],
+  home: ["Home", "होम"],
+  authLogin: ["Login", "लॉगिन"], authSignup: ["Sign Up", "साइन अप"],
+  saveMsgLogin: ["Save karne ke liye pehle signup karein.", "सहेजने के लिए पहले साइनअप करें।"]
+};
+
+const FEATURES = [
+  { i: "🪄", n: ["AI Notes", "AI नोट्स"], d: ["Short aur long notes, chapter-wise.", "छोटे और लंबे नोट्स, अध्याय-वार।"], k: "notes" },
+  { i: "📷", n: ["Photo to Notes", "फ़ोटो से नोट्स"], d: ["Chapter ki photo upload karein, notes paayein.", "अध्याय की फ़ोटो अपलोड करें, नोट्स पाएँ।"], k: "photo" },
+  { i: "✅", n: ["Objective Practice", "वस्तुनिष्ठ अभ्यास"], d: ["MCQ, 20+ questions, ek saath submit.", "MCQ, 20+ प्रश्न, एक साथ जमा।"], k: "objective" },
+  { i: "✍️", n: ["Subjective Checker", "उत्तर जाँचक"], d: ["Answer likhein ya photo upload karein, estimate paayein.", "उत्तर लिखें या फ़ोटो अपलोड करें, अनुमान पाएँ।"], k: "subjective" },
+  { i: "💬", n: ["AI Doubt Solver", "AI डाउट सॉल्वर"], d: ["Hindi ya English mein doubt puchhein.", "हिंदी या अंग्रेज़ी में सवाल पूछें।"], k: "doubt" },
+  { i: "📝", n: ["Mock Tests", "मॉक टेस्ट"], d: ["Exam jaisa test, timer aur report ke saath.", "परीक्षा जैसा टेस्ट, टाइमर और रिपोर्ट के साथ।"], k: "mock" }
+];
+const STEPS = [["Class aur subject chunein", "कक्षा और विषय चुनें"], ["Chapter upload karein ya topic likhein", "अध्याय अपलोड करें या टॉपिक लिखें"], ["Notes, practice aur feedback paayein", "नोट्स, अभ्यास और फ़ीडबैक पाएँ"]];
+const FAQS = [
+  { q: ["Kya NoteVerse free hai?", "क्या NoteVerse मुफ़्त है?"], a: ["Basic features free hain. AI features par API limits lagti hain.", "बुनियादी सुविधाएँ मुफ़्त हैं। AI सुविधाओं पर API सीमाएँ लागू होती हैं।"] },
+  { q: ["Kaunsi classes support hoti hain?", "कौन-सी कक्षाएँ समर्थित हैं?"], a: ["Class 6 se 12 tak.", "कक्षा 6 से 12 तक।"] },
+  { q: ["Kya AI marks official hain?", "क्या AI अंक आधिकारिक हैं?"], a: ["Nahi. AI marks sirf estimates hain.", "नहीं। AI अंक केवल अनुमान हैं।"] }
+];
+const SUBJ = [["Mathematics", "गणित"], ["Science", "विज्ञान"], ["English", "अंग्रेज़ी"], ["Hindi", "हिंदी"], ["Social Science", "सामाजिक विज्ञान"], ["Computer Science", "कंप्यूटर विज्ञान"]];
+const KIND = { photo: ["Photo upload", "फ़ोटो अपलोड"], notes: ["AI Notes", "AI नोट्स"], quiz: ["Objective test", "वस्तुनिष्ठ परीक्षा"], subjective: ["Subjective answer", "विवरणात्मक उत्तर"] };
+
+// Sample questions (demo, Light - Class 10 Science). Real questions JSON ya AI se aayenge.
+const SAMPLE_Q = [
+  { q: "Prakash ki gati sabse zyada kis madhyam mein hoti hai?", options: ["Paani", "Kaanch", "Nirvat", "Hawa"], answer: 2, explain: "Nirvat mein prakash ki gati lagbhag 3×10⁸ m/s hoti hai." },
+  { q: "Reflection ka niyam kya hai?", options: ["Aapatan kon = parivartan kon", "Aapatan kon > parivartan kon", "Aapatan kon < parivartan kon", "Koi sambandh nahi"], answer: 0, explain: "Aapatan kon aur parivartan kon barabar hote hain." },
+  { q: "Pratibimb sirf kis prakar ka parde par ban sakta hai?", options: ["Aabhasi", "Vastavik", "Seedha", "Chhota"], answer: 1, explain: "Vastavik pratibimb hi parde par pakda ja sakta hai." },
+  { q: "Concave mirror ki focal length ka chinh (sign) kya hota hai?", options: ["Dhanatmak", "Rinatmak", "Shoonya", "Anant"], answer: 1, explain: "New Cartesian convention mein concave mirror ki f rinatmak hoti hai." },
+  { q: "Convex lens ko kis naam se jana jata hai?", options: ["Abhisrit lens", "Avatal lens", "Samtal lens", "Chapta lens"], answer: 0, explain: "Convex lens ko abhisrit lens kehte hain." },
+  { q: "Lens ki power ki S.I. ikai kya hai?", options: ["Watt", "Dioptre", "Joule", "Tesla"], answer: 1, explain: "Lens power ki ikai dioptre (D) hai." },
+  { q: "Samtal (plane) darpan se bana pratibimb kaisa hota hai?", options: ["Ulta, vastavik", "Seedha, aabhasi, samaan aakar", "Seedha, vastavik", "Ulta, aabhasi"], answer: 1, explain: "Plane mirror seedha, aabhasi aur samaan aakar ka pratibimb banata hai." },
+  { q: "Prakash ka vakrana (refraction) kis karan hota hai?", options: ["Madhyam badalne se gati badalna", "Dhwani ka prabhav", "Gurutwakarshan", "Vidyut dhara"], answer: 0, explain: "Madhyam badalne par prakash ki gati badalti hai, isliye disha bhi badalti hai." },
+  { q: "Hawa ka apvartanank (refractive index) lagbhag kitna hai?", options: ["1.00", "1.33", "1.50", "2.42"], answer: 0, explain: "Hawa ka apvartanank lagbhag 1.00 hai." },
+  { q: "Paani ka apvartanank lagbhag kitna hai?", options: ["1.00", "1.33", "1.50", "2.42"], answer: 1, explain: "Paani ka apvartanank lagbhag 1.33 hai." },
+  { q: "Hire ka apvartanank lagbhag kitna hai?", options: ["1.33", "1.50", "2.42", "1.00"], answer: 2, explain: "Hire ka apvartanank lagbhag 2.42 hai." },
+  { q: "Lens ki power aur focal length ka sambandh kya hai?", options: ["P = f", "P = 1/f", "P = f²", "P = 1/f²"], answer: 1, explain: "P = 1/f, jahan f meter mein hai." },
+  { q: "Mirror formula kya hai?", options: ["1/f = 1/v + 1/u", "1/f = 1/v - 1/u", "f = v + u", "1/f = v/u"], answer: 0, explain: "Sign convention ke saath 1/f = 1/v + 1/u." },
+  { q: "Lens formula kya hai?", options: ["1/f = 1/v - 1/u", "1/f = 1/v + 1/u", "f = vu", "1/v = 1/f + 1/u"], answer: 0, explain: "Lens formula: 1/f = 1/v - 1/u." },
+  { q: "Snell ka niyam kis se sambandhit hai?", options: ["Vakrana", "Parivartan", "Vidyut", "Chumbakatva"], answer: 0, explain: "Snell ka niyam prakash ke vakrana se sambandhit hai." },
+  { q: "Prakash ka parivartan (reflection) kis niyam se hota hai?", options: ["Aapatan kon = parivartan kon", "Ohm ka niyam", "Newton ka niyam", "Faraday ka niyam"], answer: 0, explain: "Reflection ka pehla niyam aapatan kon aur parivartan kon ko barabar batata hai." },
+  { q: "Sooraj ka prakash prithvi tak pahunchne mein lagbhag kitna samay lagta hai?", options: ["8 minute 20 second", "8 second", "1 ghanta", "1 din"], answer: 0, explain: "Lagbhag 8 minute 20 second." },
+  { q: "Aankh mein prakash kis bhaag se pravesh karta hai?", options: ["Retina", "Cornea", "Lens", "Optic nerve"], answer: 1, explain: "Prakash pehle cornea se hokar aata hai." },
+  { q: "Aankh ke retina par kaisa pratibimb banta hai?", options: ["Aabhasi", "Vastavik aur ulta", "Seedha", "Koi nahi"], answer: 1, explain: "Retina par vastavik aur ulta pratibimb banta hai." },
+  { q: "Dentist mirror ke liye kaun-sa darpan istemal hota hai?", options: ["Samtal", "Abhisrit (concave)", "Avatal (convex)", "Lens"], answer: 1, explain: "Concave mirror chhota aur bada pratibimb dikhata hai, isliye dental mirror mein use hota hai." },
+  { q: "Vahan ke side mirror par likha hota hai: 'Vastu door hai'. Yeh kaun-sa darpan hai?", options: ["Samtal", "Avatal (convex)", "Abhisrit (concave)", "Lens"], answer: 1, explain: "Convex mirror bada field of view deta hai." }
+];
+
+const ALLOWED = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_FILES = 10;
+const MAX_STORE = 1.5 * 1024 * 1024;
+const BTN = "inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 px-6 py-3 font-semibold text-white shadow hover:opacity-90";
+const BTN2 = "inline-flex items-center justify-center rounded-xl px-6 py-3 font-medium text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50 dark:text-brand-100 dark:ring-slate-700";
+const BTNS = "rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50";
+const BTNG = "rounded-xl px-4 py-2 text-sm font-medium text-slate-600 ring-1 ring-slate-300 hover:bg-slate-100 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-800";
+const CARD = "rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800";
+const INPUT = "mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 dark:border-slate-700 dark:bg-slate-900";
+
+let lang = localStorage.getItem("nv-lang") || "en";
+let theme = localStorage.getItem("nv-theme") || "light";
+const ups = {};
+const draft = {};
+let quiz = { qs: [], ans: {}, done: false, score: null };
+let lastNotes = "";
+let lastReport = null;
+
+const $ = id => document.getElementById(id);
+const L = p => p[lang === "hi" ? 1 : 0];
+const t = k => L(T[k]);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const hrefFor = k => (["photo", "notes", "objective", "subjective"].includes(k) ? `#/${k}` : `#/soon/${k}`);
+
+function note(id, text, ok) {
+  const m = $(id);
+  if (!m) return;
+  m.textContent = text;
+  m.className = `mt-4 rounded-xl p-3 text-sm ${ok ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200" : "bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"}`;
+}
+
+/* ---------- Notebook (browser localStorage) ---------- */
+const loadNb = () => { try { return JSON.parse(localStorage.getItem("nv-notebook") || "[]"); } catch (e) { return []; } };
+function saveNb(list) { try { localStorage.setItem("nv-notebook", JSON.stringify(list)); return true; } catch (e) { return false; } }
+function addNb(item) { const l = loadNb(); l.unshift(item); return saveNb(l); }
+
+/* ---------- Uploader ---------- */
+function uploaderHTML(p) {
+  return `<div id="dz-${p}" class="rounded-2xl border-2 border-dashed border-brand-600/40 bg-white p-6 text-center dark:bg-slate-900">
+    <div class="text-3xl">📤</div>
+    <p class="mt-2 font-semibold">${t("dropText")}</p>
+    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">${t("fileRules")}</p>
+    <button data-choose="${p}" class="${BTNS} mt-3">${t("chooseFiles")}</button>
+    <input type="file" id="in-${p}" accept="image/jpeg,image/png,image/webp,application/pdf" multiple class="hidden" />
+  </div>
+  <p id="err-${p}" class="mt-2 text-sm text-red-600 dark:text-red-400"></p>
+  <div id="grid-${p}" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4"></div>`;
+}
+function mountUp(p) {
+  const el = $("up-" + p);
+  if (!el) return;
+  el.innerHTML = uploaderHTML(p);
+  renderUp(p);
+}
+function renderUp(p) {
+  const g = $("grid-" + p);
+  if (!g) return;
+  g.innerHTML = (ups[p] || []).map((f, i) => `
+    <div class="rounded-xl bg-white p-2 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+      ${f.url ? `<img src="${f.url}" alt="" class="h-24 w-full rounded-lg object-cover" />` : `<div class="grid h-24 place-items-center rounded-lg bg-slate-100 text-3xl dark:bg-slate-800">📄</div>`}
+      <p class="mt-1 truncate text-xs">${esc(f.name)}</p>
+      <button data-up="${p}" data-remove="${i}" class="mt-1 w-full rounded-lg px-2 py-1 text-xs text-red-600 ring-1 ring-red-200 dark:text-red-300 dark:ring-red-900">${t("removeBtn")}</button>
+    </div>`).join("");
+}
+function addFiles(p, list) {
+  ups[p] = ups[p] || [];
+  const errs = [];
+  for (const f of Array.from(list)) {
+    if (ups[p].length >= MAX_FILES) { errs.push(t("errCount")); break; }
+    if (!ALLOWED.includes(f.type)) { errs.push(`${f.name}: ${t("errType")}`); continue; }
+    if (f.size > MAX_SIZE) { errs.push(`${f.name}: ${t("errSize")}`); continue; }
+    ups[p].push({ file: f, name: f.name, url: f.type === "application/pdf" ? null : URL.createObjectURL(f) });
+  }
+  if ($("err-" + p)) $("err-" + p).textContent = errs.join(" | ");
+  renderUp(p);
+}
+function removeFile(p, i) {
+  const f = ups[p] && ups[p][i];
+  if (f && f.url) URL.revokeObjectURL(f.url);
+  ups[p].splice(i, 1);
+  renderUp(p);
+}
+function clearUp(p) {
+  (ups[p] || []).forEach(f => f.url && URL.revokeObjectURL(f.url));
+  ups[p] = [];
+  renderUp(p);
+}
+const readFile = f => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res(r.result);
+  r.onerror = rej;
+  r.readAsDataURL(f);
+});
+async function snapshot(p) {
+  const out = [];
+  for (const f of ups[p] || []) {
+    if (f.file.size > MAX_STORE) { out.push({ name: f.name, type: f.file.type, skipped: true }); continue; }
+    out.push({ name: f.name, type: f.file.type, data: await readFile(f.file) });
+  }
+  return out;
+}
+
+/* ---------- Common form helpers ---------- */
+function selectsHTML() {
+  return `<label class="text-sm font-medium"><span>${t("classLabel")}</span>
+    <select id="cls" data-draft="cls" class="${INPUT}">${[6, 7, 8, 9, 10, 11, 12].map(n => `<option value="${n}">${t("classLabel")} ${n}</option>`).join("")}</select></label>
+    <label class="text-sm font-medium"><span>${t("subjectLabel")}</span>
+    <select id="subj" data-draft="subj" class="${INPUT}">${SUBJ.map((s, i) => `<option value="${i}">${L(s)}</option>`).join("")}</select></label>`;
+}
+function chapterHTML() {
+  return `<label class="text-sm font-medium sm:col-span-2"><span>${t("chapterLabel")}</span>
+    <input id="chap" data-draft="chap" class="${INPUT}" placeholder="${t("chapterPh")}" /></label>`;
+}
+const meta = () => ({
+  cls: $("cls") ? $("cls").value : "",
+  subject: $("subj") ? L(SUBJ[Number($("subj").value) || 0]) : "",
+  chapter: $("chap") ? $("chap").value.trim() : ""
+});
+
+async function saveFiles(p, kind, msgId, extra = {}) {
+  if (!(ups[p] || []).length) return note(msgId, t("needFiles"), false);
+  const files = await snapshot(p);
+  const ok = addNb({ id: Date.now(), kind, createdAt: new Date().toISOString(), ...meta(), ...extra, files });
+  note(msgId, ok ? t("saveDone") : t("saveFail"), ok);
+}
+
+async function callAI(path, body) {
+  const r = await fetch(AI_BASE + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("http " + r.status);
+  return r.json();
+}
+
+/* ---------- Pages ---------- */
+function renderHome() {
+  $("view").innerHTML = `
+  <section class="mx-auto max-w-6xl px-4 pb-16 pt-12 text-center">
+    <p class="mb-3 text-sm font-semibold uppercase tracking-widest text-brand-600 dark:text-brand-100">${t("tagline")}</p>
+    <h1 class="mx-auto max-w-3xl bg-gradient-to-r from-brand-600 via-indigo-600 to-sky-500 bg-clip-text text-4xl font-extrabold text-transparent sm:text-6xl">${t("heroTitle")}</h1>
+    <p class="mx-auto mt-5 max-w-2xl text-lg text-slate-600 dark:text-slate-300">${t("heroSub")}</p>
+    <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+      <a href="#/demo" class="${BTN}">${t("tryDemo")}</a>
+      <a href="#/signup" class="${BTN2}">${t("start")}</a>
+    </div>
+  </section>
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <h2 class="mb-8 text-center text-3xl font-bold">${t("featuresTitle")}</h2>
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">${FEATURES.map(f => `
+      <a href="${hrefFor(f.k)}" class="${CARD} block transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-3 text-3xl">${f.i}</div><h3 class="font-semibold">${L(f.n)}</h3>
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">${L(f.d)}</p>
+      </a>`).join("")}</div>
+  </section>
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <h2 class="mb-8 text-center text-3xl font-bold">${t("howTitle")}</h2>
+    <ol class="grid gap-5 md:grid-cols-3">${STEPS.map((s, i) => `
+      <li class="${CARD} text-center"><span class="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-brand-600 to-indigo-600 font-bold text-white">${i + 1}</span><p class="font-medium">${L(s)}</p></li>`).join("")}</ol>
+  </section>
+  <section class="mx-auto max-w-4xl px-4 py-12">
+    <h2 class="mb-6 text-center text-3xl font-bold">${t("faqTitle")}</h2>
+    <div class="flex flex-col gap-3">${FAQS.map(f => `
+      <details class="${CARD} !p-4"><summary class="cursor-pointer font-semibold">${L(f.q)}</summary>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">${L(f.a)}</p></details>`).join("")}</div>
+  </section>`;
+}
+
+function renderDash() {
+  $("view").innerHTML = `
+  <div class="mb-6 flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-brand-600 to-indigo-600 p-4 text-white sm:flex-row sm:items-center sm:justify-between">
+    <p class="text-sm">${t("demoBanner")}</p>
+    <a href="#/signup" class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-brand-700">${t("signupFree")}</a>
+  </div>
+  <h1 class="text-2xl font-bold">${t("welcome")}</h1>
+  <p class="mb-6 text-sm text-slate-500 dark:text-slate-400">${t("sampleNote")}</p>
+  <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">${["photo", "notes", "objective", "subjective"].map(k => {
+    const f = FEATURES.find(x => x.k === k);
+    return `<a href="${hrefFor(k)}" class="${CARD} block"><span class="text-2xl">${f.i}</span><span class="mt-2 block font-semibold">${L(f.n)}</span></a>`;
+  }).join("")}</div>
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="${CARD} lg:col-span-2"><h2 class="mb-3 font-semibold">${t("recentChapters")}</h2>
+      <ul class="divide-y divide-slate-200 text-sm dark:divide-slate-800"><li class="py-2">Class 10 · Science · Light (Sample)</li><li class="py-2">Class 8 · Maths · Rational Numbers (Sample)</li></ul></div>
+    <div class="${CARD}"><h2 class="mb-3 font-semibold">${t("todayPlan")}</h2><p class="text-sm text-slate-600 dark:text-slate-400">30 min revision · 10 MCQ</p></div>
+  </div>`;
+}
+
+function renderPhoto() {
+  $("view").innerHTML = `
+  <a href="#/demo" class="text-sm text-brand-700 hover:underline dark:text-brand-100">${t("back")}</a>
+  <h1 class="mt-3 text-2xl font-bold">${t("photoTitle")}</h1>
+  <p class="mb-6 text-sm text-slate-500 dark:text-slate-400">${t("photoSub")}</p>
+  <div class="mb-4 grid gap-3 sm:grid-cols-2">${selectsHTML()}</div>
+  <div id="up-ph"></div>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <button id="saveBtn" class="${BTNS}">${t("saveNb")}</button>
+    <button data-clear="ph" class="${BTNG}">${t("clearAll")}</button>
+  </div>
+  <div id="msg"></div>
+  <p class="mt-4 text-xs text-slate-500 dark:text-slate-400">${t("processMsg")}</p>`;
+  mountUp("ph");
+  $("saveBtn").onclick = () => saveFiles("ph", "photo", "msg");
+}
+
+function renderNotes() {
+  $("view").innerHTML = `
+  <a href="#/demo" class="text-sm text-brand-700 hover:underline dark:text-brand-100">${t("back")}</a>
+  <h1 class="mt-3 text-2xl font-bold">${t("notesTitle")}</h1>
+  <p class="mb-6 text-sm text-slate-500 dark:text-slate-400">${t("notesSub")}</p>
+  <div class="mb-4 grid gap-3 sm:grid-cols-2">${selectsHTML()}${chapterHTML()}</div>
+  <div id="up-ph"></div>
+  <label class="mt-4 block text-sm font-medium"><span>${t("notesTitle")}</span>
+    <select id="mode" data-draft="mode" class="${INPUT}">
+      <option value="short">${t("modeShort")}</option><option value="long">${t("modeLong")}</option><option value="rev">${t("modeRev")}</option>
+    </select></label>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <button id="genBtn" class="${BTNS}">${t("genNotes")}</button>
+    <button id="saveBtn" class="${BTNG}">${t("saveNb")}</button>
+  </div>
+  <div id="msg"></div>
+  <div id="out" class="mt-4 whitespace-pre-wrap text-sm"></div>`;
+  mountUp("ph");
+  $("saveBtn").onclick = () => saveFiles("ph", "notes", "msg", { notes: lastNotes });
+  $("genBtn").onclick = genNotes;
+}
+
+async function genNotes() {
+  if (!AI_BASE) return note("msg", t("noKey"), false);
+  note("msg", t("busy"), true);
+  try {
+    const r = await callAI("/generate-notes", { ...meta(), mode: $("mode").value, lang });
+    lastNotes = String(r.notes || "");
+    $("out").textContent = lastNotes;
+    note("msg", "", true);
+  } catch (e) {
+    note("msg", t("aiErr"), false);
+  }
+}
+
+/* ----- Objective ----- */
+function renderObjective() {
+  $("view").innerHTML = `
+  <a href="#/demo" class="text-sm text-brand-700 hover:underline dark:text-brand-100">${t("back")}</a>
+  <h1 class="mt-3 text-2xl font-bold">${t("objTitle")}</h1>
+  <p class="mb-6 text-sm text-slate-500 dark:text-slate-400">${t("objSub")}</p>
+  <div class="mb-4 grid gap-3 sm:grid-cols-2">${selectsHTML()}${chapterHTML()}</div>
+  <div id="up-ob"></div>
+  <div class="mt-4 flex flex-wrap gap-3">
+    <button id="sampleBtn" class="${BTNG}">${t("sampleLoad")}</button>
+    <button id="aiBtn" class="${BTNG}">${t("aiGen")}</button>
+  </div>
+  <label class="mt-4 block text-sm font-medium"><span>${t("jsonLabel")}</span>
+    <textarea id="jsonIn" data-draft="json" rows="3" class="${INPUT} font-mono text-xs"></textarea></label>
+  <button id="jsonBtn" class="${BTNG} mt-2">${t("jsonLoad")}</button>
+  <div id="msg"></div>
+  <div class="mt-4 flex flex-wrap items-center gap-3">
+    <span id="qCount" class="text-sm font-semibold"></span>
+    <span id="minNote" class="text-xs text-amber-700 dark:text-amber-300"></span>
+  </div>
+  <div id="quiz" class="mt-4 flex flex-col gap-4"></div>
+  <div id="score" class="mt-4"></div>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <button id="submitQuiz" class="${BTNS}">${t("submitQuiz")}</button>
+    <button id="saveQuiz" class="${BTNG}">${t("saveResult")}</button>
+    <button id="newQuiz" class="${BTNG}">${t("newTest")}</button>
+  </div>`;
+  mountUp("ob");
+  renderQuiz();
+  $("sampleBtn").onclick = () => setQs(SAMPLE_Q);
+  $("aiBtn").onclick = genMcq;
+  $("jsonBtn").onclick = loadJson;
+  $("submitQuiz").onclick = submitQuiz;
+  $("saveQuiz").onclick = saveQuizResult;
+  $("newQuiz").onclick = () => { quiz = { qs: quiz.qs, ans: {}, done: false, score: null }; renderQuiz(); };
+}
+
+const validQs = arr => Array.isArray(arr) && arr.length > 0 && arr.every(q =>
+  q && typeof q.q === "string" && Array.isArray(q.options) && q.options.length === 4 &&
+  Number.isInteger(q.answer) && q.answer >= 0 && q.answer <= 3);
+
+function setQs(arr) {
+  quiz = { qs: arr.map(q => ({ ...q })), ans: {}, done: false, score: null };
+  note("msg", t("loaded"), true);
+  renderQuiz();
+}
+
+function loadJson() {
+  try {
+    const arr = JSON.parse($("jsonIn").value);
+    if (!validQs(arr)) throw new Error("bad");
+    setQs(arr);
+  } catch (e) {
+    note("msg", t("jsonErr"), false);
+  }
+}
+
+async function genMcq() {
+  if (!AI_BASE) return note("msg", t("noKey"), false);
+  note("msg", t("busy"), true);
+  try {
+    const r = await callAI("/generate-mcq", { ...meta(), count: 20, lang });
+    if (!validQs(r.questions)) throw new Error("bad");
+    setQs(r.questions);
+  } catch (e) {
+    note("msg", t("aiErr"), false);
+  }
+}
+
+function renderQuiz() {
+  if (!$("quiz")) return;
+  const n = quiz.qs.length;
+  $("quiz").innerHTML = quiz.qs.map((q, i) => {
+    const picked = quiz.ans[i];
+    return `<div class="${CARD}">
+      <p class="font-semibold">${i + 1}. ${esc(q.q)}</p>
+      <div class="mt-3 grid gap-2">${q.options.map((o, j) => {
+        let cls = "border-slate-300 dark:border-slate-700";
+        if (quiz.done) {
+          if (j === q.answer) cls = "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30";
+          else if (j === picked) cls = "border-red-500 bg-red-50 dark:bg-red-900/30";
+        } else if (picked === j) cls = "border-brand-600 bg-brand-50 dark:bg-slate-800";
+        return `<button data-q="${i}" data-o="${j}" ${quiz.done ? "disabled" : ""} class="rounded-xl border px-3 py-2 text-left text-sm ${cls}">${String.fromCharCode(65 + j)}. ${esc(o)}</button>`;
+      }).join("")}</div>
+      ${quiz.done && q.explain ? `<p class="mt-3 text-sm text-slate-600 dark:text-slate-400">${t("explain")}: ${esc(q.explain)}</p>` : ""}
+    </div>`;
+  }).join("");
+  $("qCount").textContent = `${n} ${t("qCount")}`;
+  $("minNote").textContent = n < 20 ? t("minQ") : "";
+  $("submitQuiz").disabled = quiz.done || n < 20;
+  $("score").innerHTML = quiz.done && quiz.score
+    ? `<div class="${CARD} text-center"><p class="text-lg font-bold">${t("correct")}: ${quiz.score.c}/${quiz.score.total} · ${quiz.score.pct}%</p></div>`
+    : "";
+}
+
+function submitQuiz() {
+  if (quiz.qs.length < 20) return note("msg", t("minQ"), false);
+  const c = quiz.qs.filter((q, i) => quiz.ans[i] === q.answer).length;
+  quiz.score = { c, total: quiz.qs.length, pct: Math.round((c / quiz.qs.length) * 100) };
+  quiz.done = true;
+  renderQuiz();
+}
+
+async function saveQuizResult() {
+  if (!quiz.done) return note("msg", "Pehle submit karein.", false);
+  const files = await snapshot("ob");
+  const ok = addNb({ id: Date.now(), kind: "quiz", createdAt: new Date().toISOString(), ...meta(), score: quiz.score, files });
+  note("msg", ok ? t("saveDone") : t("saveFail"), ok);
+}
+
+/* ----- Subjective ----- */
+function renderSubjective() {
+  $("view").innerHTML = `
+  <a href="#/demo" class="text-sm text-brand-700 hover:underline dark:text-brand-100">${t("back")}</a>
+  <h1 class="mt-3 text-2xl font-bold">${t("subjTitle")}</h1>
+  <p class="mb-6 text-sm text-slate-500 dark:text-slate-400">${t("subjSub")}</p>
+  <div class="mb-4 grid gap-3 sm:grid-cols-2">${selectsHTML()}${chapterHTML()}</div>
+  <label class="mb-4 block text-sm font-medium"><span>${t("questionLabel")}</span>
+    <textarea data-draft="question" id="question" rows="2" class="${INPUT}"></textarea></label>
+  <div id="up-sq"></div>
+  <label class="mt-4 block text-sm font-medium"><span>${t("answerLabel")}</span>
+    <textarea data-draft="answer" id="answer" rows="6" class="${INPUT}"></textarea></label>
+  <p class="mt-4 text-sm font-medium">${t("answerPhoto")}</p>
+  <div id="up-sa"></div>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <button id="checkBtn" class="${BTNS}">${t("checkBtn")}</button>
+    <button id="saveBtn" class="${BTNG}">${t("saveNb")}</button>
+  </div>
+  <div id="msg"></div>
+  <div id="out" class="mt-4"></div>`;
+  mountUp("sq");
+  mountUp("sa");
+  if (lastReport) renderReport(lastReport);
+  $("checkBtn").onclick = checkAnswer;
+  $("saveBtn").onclick = saveSubjective;
+}
+
+async function checkAnswer() {
+  const answer = $("answer").value.trim();
+  if (!answer && !(ups.sa || []).length) return note("msg", t("needAnswer"), false);
+  if (!AI_BASE) return note("msg", t("noKey"), false);
+  note("msg", t("busy"), true);
+  try {
+    const images = [];
+    for (const f of ups.sa || []) if (f.file.type !== "application/pdf") images.push(await readFile(f.file));
+    const r = await callAI("/check-answer", { ...meta(), question: $("question").value.trim(), answer, images, lang });
+    lastReport = r;
+    renderReport(r);
+    note("msg", "", true);
+  } catch (e) {
+    note("msg", t("aiErr"), false);
+  }
+}
+
+function renderReport(r) {
+  $("out").innerHTML = `<div class="${CARD} space-y-3">
+    <p class="text-lg font-bold">${t("marks")}: ${esc(r.marks)} / ${esc(r.maxMarks)}</p>
+    <p class="text-xs text-amber-700 dark:text-amber-300">${t("estNote")}</p>
+    <div><p class="font-semibold">${t("feedback")}</p><p class="whitespace-pre-wrap text-sm">${esc(r.feedback || "")}</p></div>
+    <div><p class="font-semibold">${t("model")}</p><p class="whitespace-pre-wrap text-sm">${esc(r.modelAnswer || "")}</p></div>
+  </div>`;
+}
+
+async function saveSubjective() {
+  const files = [...(await snapshot("sq")), ...(await snapshot("sa"))];
+  const ok = addNb({
+    id: Date.now(), kind: "subjective", createdAt: new Date().toISOString(), ...meta(),
+    question: $("question").value.trim(), answer: $("answer").value.trim(), report: lastReport, files
+  });
+  note("msg", ok ? t("saveDone") : t("saveFail"), ok);
+}
+
+/* ----- Notebook ----- */
+function renderNotebook() {
+  const list = loadNb();
+  $("view").innerHTML = `
+  <h1 class="text-2xl font-bold">${t("nbTitle")}</h1>
+  <div class="mt-4 flex flex-col gap-4">${list.length ? list.map(nbCard).join("") : `<p class="text-sm text-slate-500">${t("nbEmpty")}</p>`}</div>`;
+}
+function nbCard(it) {
+  const files = it.files || [];
+  const thumbs = files.filter(f => f.data && f.type !== "application/pdf")
+    .map(f => `<img src="${f.data}" alt="" class="h-24 w-full rounded-lg object-cover" />`).join("");
+  const pdfs = files.filter(f => f.type === "application/pdf")
+    .map(f => `<span class="mr-2 text-xs">📄 ${esc(f.name)}</span>`).join("");
+  let body = "";
+  if (it.score) body += `<p class="text-sm font-semibold">${t("correct")}: ${it.score.c}/${it.score.total} (${it.score.pct}%)</p>`;
+  if (it.question) body += `<p class="mt-2 text-sm"><b>Q:</b> ${esc(it.question)}</p>`;
+  if (it.answer) body += `<p class="mt-1 whitespace-pre-wrap text-sm">${esc(it.answer)}</p>`;
+  if (it.report) body += `<p class="mt-1 text-sm">${t("marks")}: ${esc(it.report.marks)} / ${esc(it.report.maxMarks)}</p>`;
+  if (it.notes) body += `<div class="mt-2 whitespace-pre-wrap text-sm">${esc(it.notes)}</div>`;
+  return `<div class="${CARD}">
+    <div class="flex items-start justify-between gap-3">
+      <div><p class="font-semibold">${L(KIND[it.kind] || ["Item", "आइटम"])}</p>
+      <p class="text-xs text-slate-500 dark:text-slate-400">${esc((it.createdAt || "").slice(0, 10))} ${esc(it.subject || "")} ${esc(it.chapter || "")}</p></div>
+      <button data-del="${it.id}" class="text-xs text-red-600 dark:text-red-300">${t("delBtn")}</button>
+    </div>
+    ${body}
+    <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">${thumbs}</div>${pdfs}
+  </div>`;
+}
+
+function renderSoon(key) {
+  const f = FEATURES.find(x => x.k === key);
+  $("view").innerHTML = `<div class="${CARD} mx-auto mt-16 max-w-md text-center">
+    <h1 class="text-xl font-bold">${f ? L(f.n) : ""}</h1>
+    <p class="mt-2 text-sm text-slate-500">${t("soonText")}</p>
+    <a href="#/" class="mt-4 inline-block ${BTN2}">${t("home")}</a></div>`;
+}
+
+function renderAuth(kind) {
+  $("view").innerHTML = `<div class="${CARD} mx-auto mt-24 max-w-sm text-center">
+    <h1 class="text-xl font-bold">${kind === "login" ? t("authLogin") : t("authSignup")}</h1>
+    <p class="mt-2 text-sm text-slate-500">${t("authNote")}</p>
+    <a href="#/demo" class="mt-4 inline-block ${BTN2}">${t("tryDemo")}</a>
+    <a href="#/" class="mt-4 ml-2 inline-block ${BTN2}">${t("home")}</a></div>`;
+}
+
+/* ---------- Router + global events ---------- */
+function applyStatic() {
+  document.querySelectorAll("[data-t]").forEach(el => { el.textContent = t(el.dataset.t); });
+  $("langBtn").textContent = lang === "en" ? "हिं" : "EN";
+  $("themeBtn").textContent = theme === "dark" ? "☀️" : "🌙";
+  document.documentElement.lang = lang;
+  document.documentElement.classList.toggle("dark", theme === "dark");
+}
+
+function route() {
+  const parts = (location.hash || "#/").split("/");
+  const page = parts[1] || "";
+  applyStatic();
+  if (page === "demo") renderDash();
+  else if (page === "photo") renderPhoto();
+  else if (page === "notes") renderNotes();
+  else if (page === "objective") renderObjective();
+  else if (page === "subjective") renderSubjective();
+  else if (page === "notebook") renderNotebook();
+  else if (page === "login" || page === "signup") renderAuth(page);
+  else if (page === "soon") renderSoon(parts[2]);
+  else renderHome();
+  document.querySelectorAll("[data-draft]").forEach(el => {
+    if (draft[el.dataset.draft] !== undefined) el.value = draft[el.dataset.draft];
+  });
+  window.scrollTo(0, 0);
+}
+
+document.addEventListener("click", e => {
+  const c = e.target.closest("[data-choose]");
+  if (c) return $("in-" + c.dataset.choose).click();
+  const r = e.target.closest("[data-remove]");
+  if (r) return removeFile(r.dataset.up, Number(r.dataset.remove));
+  const cl = e.target.closest("[data-clear]");
+  if (cl) return clearUp(cl.dataset.clear);
+  const del = e.target.closest("[data-del]");
+  if (del) {
+    saveNb(loadNb().filter(x => String(x.id) !== del.dataset.del));
+    return renderNotebook();
+  }
+  const q = e.target.closest("button[data-q]");
+  if (q && !quiz.done) {
+    quiz.ans[Number(q.dataset.q)] = Number(q.dataset.o);
+    renderQuiz();
+  }
+});
+document.addEventListener("change", e => {
+  if (e.target.matches("input[type=file]")) {
+    addFiles(e.target.id.slice(3), e.target.files);
+    e.target.value = "";
+  } else if (e.target.dataset && e.target.dataset.draft) {
+    draft[e.target.dataset.draft] = e.target.value;
+  }
+});
+document.addEventListener("input", e => {
+  if (e.target.dataset && e.target.dataset.draft) draft[e.target.dataset.draft] = e.target.value;
+});
+document.addEventListener("dragover", e => { if (e.target.closest("[id^='dz-']")) e.preventDefault(); });
+document.addEventListener("drop", e => {
+  const z = e.target.closest("[id^='dz-']");
+  if (z) { e.preventDefault(); addFiles(z.id.slice(3), e.dataTransfer.files); }
+});
+
+$("langBtn").addEventListener("click", () => {
+  lang = lang === "en" ? "hi" : "en";
+  localStorage.setItem("nv-lang", lang);
+  route();
+});
+$("themeBtn").addEventListener("click", () => {
+  theme = theme === "light" ? "dark" : "light";
+  localStorage.setItem("nv-theme", theme);
+  applyStatic();
+});
+window.addEventListener("hashchange", route);
+
+route();
+</script>
+</body>
+</html>
